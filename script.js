@@ -32,6 +32,10 @@ const gameOverScreen = document.getElementById("game-over");
 const COLS = 10;
 const ROWS = 20;
 const BLOCK = 30; // tamanho em pixels de um bloco no canvas principal
+// ====== IMAGEM DO PAUSE ======
+let pauseStartTime = null;
+let pauseScale = 0;
+const pauseImage = document.getElementById("pause-creature");
 
 // ====== TETROMINOS & CORES ======
 const tetrominos = {
@@ -388,14 +392,32 @@ function draw(){
   drawPiece(piece);
   drawNext();
 
-  if(paused){
-    ctx.fillStyle="rgba(0,0,0,0.6)";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle="#2778af";
-    ctx.font="700 32px Orbitron, sans-serif";
-    ctx.textAlign="center";
-    ctx.fillText("PAUSED",canvas.width/2,canvas.height/2);
+  if (paused) {
+  ctx.fillStyle = "rgba(0,0,0,0.6)";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  ctx.fillStyle = "#2778af";
+  ctx.font = "700 32px Orbitron, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("PAUSED", canvas.width/2, canvas.height/2 - 100);
+
+  // ===== IMAGEM DO PAUSE QUE CRESCE =====
+  const elapsed = (Date.now() - pauseStartTime) / 1000; // segundos
+
+  if (elapsed > 10) {
+    pauseScale = (elapsed - 10) * 0.1; // quanto mais tempo > mais cresce
+
+    const img = pauseImage;
+    const baseSize = 80; // tamanho inicial
+    const size = baseSize + pauseScale * 200; // cresce gradualmente
+
+    const x = canvas.width/2 - size/2;
+    const y = canvas.height/2 - size/2 + 40;
+
+    ctx.drawImage(img, x, y, size, size);
   }
+}
+
 
   if (scoreEl) scoreEl.textContent = score.toString().padStart(6,"0");
   if (linesEl) linesEl.textContent = lines;
@@ -423,7 +445,18 @@ document.addEventListener("keydown", e => {
   // Quando game over, R reinicia
   if (gameOver && e.key.toLowerCase() === "r") { reset(); return; }
   // Toggle pause
-  if (e.key.toLowerCase() === "p") { paused = !paused; return; }
+ if (e.key.toLowerCase() === "p") {
+  paused = !paused;
+  if (paused) {
+    pauseStartTime = Date.now();
+    pauseScale = 0;
+  } else {
+    pauseStartTime = null;
+    pauseScale = 0;
+  }
+  return;
+}
+
   // Não processar controles se pausado ou game over
   if (paused || gameOver) return;
 
